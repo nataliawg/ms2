@@ -1,0 +1,101 @@
+# "org" ensures this Service is used with the correct Serverless Framework Access Key.
+org: nwatsong
+# "app" enables Serverless Framework Dashboard features and sharing them with other Services.
+app: ola
+service: sistema-work-and-travel
+
+provider:
+  name: aws
+  runtime: python3.8
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  iam:
+    role: arn:aws:iam::963617227887:role/LabRole
+
+resources:
+  Resources:
+    TEmpresa:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: t_empresa
+        AttributeDefinitions:
+          - AttributeName: tenant_id
+            AttributeType: S
+          - AttributeName: empresa_id
+            AttributeType: S
+          - AttributeName: nombre
+            AttributeType: S
+        KeySchema:
+          - AttributeName: tenant_id
+            KeyType: HASH
+          - AttributeName: empresa_id
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        GlobalSecondaryIndexes:
+          - IndexName: tenant_id-nombre-index
+            KeySchema:
+              - AttributeName: tenant_id
+                KeyType: HASH
+              - AttributeName: nombre
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+
+    TEmpleo:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: t_empleo
+        AttributeDefinitions:
+          - AttributeName: tenant_id
+            AttributeType: S
+          - AttributeName: empleo_id
+            AttributeType: S
+          - AttributeName: empresa_id
+            AttributeType: S
+          - AttributeName: salario
+            AttributeType: N
+        KeySchema:
+          - AttributeName: tenant_id
+            KeyType: HASH
+          - AttributeName: empleo_id
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
+        PointInTimeRecoverySpecification:
+          PointInTimeRecoveryEnabled: true
+        GlobalSecondaryIndexes:
+          - IndexName: tenant_id-empresa_id-index
+            KeySchema:
+              - AttributeName: tenant_id
+                KeyType: HASH
+              - AttributeName: empresa_id
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+        LocalSecondaryIndexes:
+          - IndexName: salario_index
+            KeySchema:
+              - AttributeName: tenant_id
+                KeyType: HASH
+              - AttributeName: salario
+                KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+
+functions:
+  crearEmpresa:
+    handler: crud/crearEmpresa.handler
+  buscarEmpresa:
+    handler: crud/buscarEmpresa.handler
+  eliminarEmpresa:
+    handler: crud/eliminarEmpresa.handler
+  crearEmpleo:
+    handler: crud/crearEmpleo.handler
+  buscarEmpleo:
+    handler: crud/buscarEmpleo.handler
+  eliminarEmpleo:
+    handler: crud/eliminarEmpleo.handler
+  validarToken:
+    handler: validarToken.handler
+
